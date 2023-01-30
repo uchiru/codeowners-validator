@@ -22,12 +22,14 @@ type NotOwnedFileConfig struct {
 	TrustWorkspace bool     `envconfig:"default=false"`
 	SkipPatterns   []string `envconfig:"optional"`
 	Subdirectories []string `envconfig:"optional"`
+    GitLsArguments []string `envconfig:"optional"`
 }
 
 type NotOwnedFile struct {
 	skipPatterns   map[string]struct{}
 	subDirectories []string
 	trustWorkspace bool
+	gitLsArguments []string
 }
 
 func NewNotOwnedFile(cfg NotOwnedFileConfig) *NotOwnedFile {
@@ -40,6 +42,7 @@ func NewNotOwnedFile(cfg NotOwnedFileConfig) *NotOwnedFile {
 		skipPatterns:   skip,
 		subDirectories: cfg.Subdirectories,
 		trustWorkspace: cfg.TrustWorkspace,
+		gitLsArguments: cfg.GitLsArguments,
 	}
 }
 
@@ -182,6 +185,7 @@ func (c *NotOwnedFile) GitResetCurrentBranch(repoDir string) error {
 
 func (c *NotOwnedFile) GitListFiles(repoDir string) (string, error) {
 	args := []string{"ls-files"}
+	args = append(args, c.gitLsArguments...)
 	args = append(args, c.subDirectories...)
 
 	gitls := pipe.Script(

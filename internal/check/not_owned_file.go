@@ -22,7 +22,7 @@ type NotOwnedFileConfig struct {
 	TrustWorkspace bool     `envconfig:"default=false"`
 	SkipPatterns   []string `envconfig:"optional"`
 	Subdirectories []string `envconfig:"optional"`
-    GitLsArguments []string `envconfig:"optional"`
+	GitLsArguments []string `envconfig:"optional"`
 }
 
 type NotOwnedFile struct {

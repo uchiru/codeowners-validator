@@ -28,11 +28,11 @@ type NotOwnedFileConfig struct {
 type NotOwnedFile struct {
 	skipPatterns   map[string]struct{}
 	subDirectories []string
-	trustWorkspace bool
 	gitLsArguments []string
+	trustWorkspace bool
 }
 
-func NewNotOwnedFile(cfg NotOwnedFileConfig) *NotOwnedFile {
+func NewNotOwnedFile(cfg *NotOwnedFileConfig) *NotOwnedFile {
 	skip := map[string]struct{}{}
 	for _, p := range cfg.SkipPatterns {
 		skip[p] = struct{}{}

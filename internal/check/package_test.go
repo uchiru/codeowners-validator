@@ -21,7 +21,7 @@ func TestRespectingCanceledContext(t *testing.T) {
 		check.NewDuplicatedPattern(),
 		check.NewFileExist(),
 		check.NewValidSyntax(),
-		check.NewNotOwnedFile(check.NotOwnedFileConfig{}),
+		check.NewNotOwnedFile(&check.NotOwnedFileConfig{}),
 		must(check.NewValidOwner(check.ValidOwnerConfig{Repository: "org/repo"}, nil, true)),
 	}
 

@@ -31,21 +31,21 @@ jobs:
         run: make test-unit
       - name: "Hammer unit-test with ${{ matrix.go-version }}"
         run: make test-hammer
-  # code-quality-test:
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       go-version: [ 1.18.x ]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - name: Set up Go
-  #       uses: actions/setup-go@v3
-  #       with:
-  #         go-version: ${{ matrix.go-version }}
-  #         cache: true
-  #     - name: "Code Quality Analysis"
-  #       run: make test-lint
+  code-quality-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: [ 1.18.x ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+      - name: "Code Quality Analysis"
+        run: make test-lint
   # integration-test:
   #   strategy:
   #     fail-fast: false

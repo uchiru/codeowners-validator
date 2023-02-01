@@ -41,9 +41,6 @@ dockers:
       - "ghcr.io/uchiru/codeowners-validator:{{ .Tag }}"
       - "ghcr.io/uchiru/codeowners-validator:v{{ .Major }}.{{ .Minor }}"
       - "ghcr.io/uchiru/codeowners-validator:v{{ .Major }}"
-      - "uchiru/codeowners-validator:latest"
-      - "uchiru/codeowners-validator:{{ .Tag }}"
-      - "uchiru/codeowners-validator:v{{ .Major }}.{{ .Minor }}"
 
 checksum:
   name_template: 'checksums.txt'

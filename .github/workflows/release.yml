@@ -52,5 +52,5 @@ jobs:
 
           args: release --rm-dist
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT_GORELEASER }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

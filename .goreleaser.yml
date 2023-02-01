@@ -67,12 +67,12 @@ release:
   # Repo in which the release will be created.
   # Default is extracted from the origin remote URL or empty if its private hosted.
   github:
-    owner: mszostok
+    owner: uchiru
     name: codeowners-validator
 
 brews:
   - name: codeowners-validator
-    homepage: https://github.com/mszostok/codeowners-validator
+    homepage: https://github.com/uchiru/codeowners-validator
     description: Ensures the correctness of your CODEOWNERS file.
     license: "Apache License 2.0"
     tap:

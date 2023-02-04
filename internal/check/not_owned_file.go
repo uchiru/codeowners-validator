@@ -19,17 +19,17 @@ type NotOwnedFileConfig struct {
 	// TrustWorkspace sets the global gif config
 	// to trust a given repository path
 	// see: https://github.com/actions/checkout/issues/766
-	TrustWorkspace bool     `envconfig:"default=false"`
-	SkipPatterns   []string `envconfig:"optional"`
-	Subdirectories []string `envconfig:"optional"`
-	GitLsArguments []string `envconfig:"optional"`
+	TrustWorkspace   bool     `envconfig:"default=false"`
+	SkipPatterns     []string `envconfig:"optional"`
+	Subdirectories   []string `envconfig:"optional"`
+	GitDiffArguments []string `envconfig:"optional"`
 }
 
 type NotOwnedFile struct {
-	skipPatterns   map[string]struct{}
-	subDirectories []string
-	gitLsArguments []string
-	trustWorkspace bool
+	skipPatterns     map[string]struct{}
+	subDirectories   []string
+	gitDiffArguments []string
+	trustWorkspace   bool
 }
 
 func NewNotOwnedFile(cfg *NotOwnedFileConfig) *NotOwnedFile {
@@ -39,10 +39,10 @@ func NewNotOwnedFile(cfg *NotOwnedFileConfig) *NotOwnedFile {
 	}
 
 	return &NotOwnedFile{
-		skipPatterns:   skip,
-		subDirectories: cfg.Subdirectories,
-		trustWorkspace: cfg.TrustWorkspace,
-		gitLsArguments: cfg.GitLsArguments,
+		skipPatterns:     skip,
+		subDirectories:   cfg.Subdirectories,
+		trustWorkspace:   cfg.TrustWorkspace,
+		gitDiffArguments: cfg.GitDiffArguments,
 	}
 }
 
@@ -91,7 +91,13 @@ func (c *NotOwnedFile) Check(ctx context.Context, in Input) (output Output, err 
 		return Output{}, err
 	}
 
-	out, err := c.GitListFiles(in.RepoDir)
+	out, err := func() (string, error) {
+		if len(c.gitDiffArguments) > 0 {
+			return c.GitDiffFiles(in.RepoDir)
+		}
+		return c.GitListFiles(in.RepoDir)
+	}()
+
 	if err != nil {
 		return Output{}, err
 	}
@@ -185,7 +191,6 @@ func (c *NotOwnedFile) GitResetCurrentBranch(repoDir string) error {
 
 func (c *NotOwnedFile) GitListFiles(repoDir string) (string, error) {
 	args := []string{"ls-files"}
-	args = append(args, c.gitLsArguments...)
 	args = append(args, c.subDirectories...)
 
 	gitls := pipe.Script(
@@ -194,6 +199,23 @@ func (c *NotOwnedFile) GitListFiles(repoDir string) (string, error) {
 	)
 
 	stdout, stderr, err := pipe.DividedOutput(gitls)
+	if err != nil {
+		return "", errors.Wrap(err, string(stderr))
+	}
+
+	return string(stdout), nil
+}
+
+func (c *NotOwnedFile) GitDiffFiles(repoDir string) (string, error) {
+	args := []string{"diff"}
+	args = append(args, c.gitDiffArguments...)
+
+	gitdiff := pipe.Script(
+		pipe.ChDir(repoDir),
+		pipe.Exec("git", args...),
+	)
+
+	stdout, stderr, err := pipe.DividedOutput(gitdiff)
 	if err != nil {
 		return "", errors.Wrap(err, string(stderr))
 	}

@@ -73,8 +73,8 @@ inputs:
     description: "Only check listed subdirectories for CODEOWNERS ownership that don't have owners."
     required: false
 
-  not_owned_checker_git_ls_arguments:
-    description: "Add git ls arguments. Delimited by ,"
+  not_owned_checker_git_diff_arguments:
+    description: "Add git diff arguments. Delimited by ,"
     required: false
 
   not_owned_checker_trust_workspace:

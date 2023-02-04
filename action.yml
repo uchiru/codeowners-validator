@@ -84,7 +84,7 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'docker://ghcr.io/uchiru/codeowners-validator:v0.8.3'
+  image: 'docker://ghcr.io/uchiru/codeowners-validator:v0.8.4'
   env:
     ENVS_PREFIX: "INPUT"
 

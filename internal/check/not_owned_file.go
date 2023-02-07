@@ -105,7 +105,7 @@ func (c *NotOwnedFile) Check(ctx context.Context, in Input) (output Output, err 
 	lsOut := strings.TrimSpace(out)
 	if lsOut != "" {
 		lines := strings.Split(lsOut, "\n")
-		filteredLines := c.filterByOwners(in.CodeownersEntries, lines)
+		filteredLines := c.filterByOwners(patterns, lines)
 		if len(filteredLines) > 0 {
 			msg := fmt.Sprintf("Found %d not owned files (skipped patterns: %q):\n%s", len(filteredLines), c.skipPatternsList(), c.ListFormatFunc(filteredLines))
 			bldr.ReportIssue(msg)
@@ -248,10 +248,10 @@ func (c *NotOwnedFile) skipPatternsList() string {
 	return strings.Join(list, ",")
 }
 
-func (c *NotOwnedFile) filterByOwners(entries []codeowners.Entry, files []string) []string {
-	f := func(search string, entries []codeowners.Entry) bool {
-		for _, entry := range entries {
-			if ownerFound := strings.HasPrefix(search, entry.Pattern); ownerFound {
+func (c *NotOwnedFile) filterByOwners(patterns, files []string) []string {
+	f := func(search string, patterns []string) bool {
+		for _, pattern := range patterns {
+			if ownerFound := strings.HasPrefix(search, pattern); ownerFound {
 				return true
 			}
 		}
@@ -260,7 +260,7 @@ func (c *NotOwnedFile) filterByOwners(entries []codeowners.Entry, files []string
 
 	var result []string
 	for _, file := range files {
-		if fileOwnerfound := f(file, entries); fileOwnerfound {
+		if fileOwnerfound := f(file, patterns); fileOwnerfound {
 			continue
 		}
 		result = append(result, file)

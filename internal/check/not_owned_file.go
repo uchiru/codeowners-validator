@@ -105,8 +105,11 @@ func (c *NotOwnedFile) Check(ctx context.Context, in Input) (output Output, err 
 	lsOut := strings.TrimSpace(out)
 	if lsOut != "" {
 		lines := strings.Split(lsOut, "\n")
-		msg := fmt.Sprintf("Found %d not owned files (skipped patterns: %q):\n%s", len(lines), c.skipPatternsList(), c.ListFormatFunc(lines))
-		bldr.ReportIssue(msg)
+		filteredLines := c.filterByOwners(in.CodeownersEntries, lines)
+		if len(filteredLines) > 0 {
+			msg := fmt.Sprintf("Found %d not owned files (skipped patterns: %q):\n%s", len(filteredLines), c.skipPatternsList(), c.ListFormatFunc(filteredLines))
+			bldr.ReportIssue(msg)
+		}
 	}
 
 	return bldr.Output(), nil
@@ -243,6 +246,27 @@ func (c *NotOwnedFile) skipPatternsList() string {
 		list = append(list, k)
 	}
 	return strings.Join(list, ",")
+}
+
+func (c *NotOwnedFile) filterByOwners(entries []codeowners.Entry, files []string) []string {
+	f := func(search string, entries []codeowners.Entry) bool {
+		for _, entry := range entries {
+			if ownerFound := strings.HasPrefix(search, entry.Pattern); ownerFound {
+				return true
+			}
+		}
+		return false
+	}
+
+	var result []string
+	for _, file := range files {
+		if fileOwnerfound := f(file, entries); fileOwnerfound {
+			continue
+		}
+		result = append(result, file)
+	}
+
+	return result
 }
 
 // ListFormatFunc is a basic formatter that outputs

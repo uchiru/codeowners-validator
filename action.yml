@@ -73,6 +73,10 @@ inputs:
     description: "Only check listed subdirectories for CODEOWNERS ownership that don't have owners."
     required: false
 
+  not_owned_checker_git_diff_arguments:
+    description: "Add git diff arguments. Delimited by ,"
+    required: false
+
   not_owned_checker_trust_workspace:
     description: "Specifies whether the repository path should be marked as safe. See: https://github.com/actions/checkout/issues/766"
     required: false
@@ -80,7 +84,7 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'docker://ghcr.io/mszostok/codeowners-validator:v0.7.4'
+  image: 'docker://ghcr.io/uchiru/codeowners-validator:v0.8.6'
   env:
     ENVS_PREFIX: "INPUT"
 

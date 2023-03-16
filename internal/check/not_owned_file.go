@@ -111,7 +111,7 @@ func (c *NotOwnedFile) Check(ctx context.Context, in Input) (output Output, err 
 		filteredOwnerLines := c.filterByOwners(patterns, lines)
 		filteredLines := c.filterByPaths(filteredOwnerLines)
 		if len(filteredLines) > 0 {
-			msg := fmt.Sprintf("Found %d not owned files (skipped patterns: %q):\n%s", len(filteredLines), c.skipPatternsList(), c.ListFormatFunc(filteredLines))
+			msg := fmt.Sprintf("Found %d not owned files (skipped patterns: %q, skipped paths: %q):\n%s", len(filteredLines), c.skipPatternsList(), c.skipPathPatterns, c.ListFormatFunc(filteredLines))
 			bldr.ReportIssue(msg)
 		}
 	}

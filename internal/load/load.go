@@ -74,7 +74,7 @@ func loadExperimentalChecks(experimentalChecks []string) ([]check.Checker, error
 			return nil, errors.Wrapf(err, "while loading config for %s", "notowned")
 		}
 
-		checks = append(checks, check.NewNotOwnedFile(cfg.NotOwnedChecker))
+		checks = append(checks, check.NewNotOwnedFile(&cfg.NotOwnedChecker))
 	}
 
 	if contains(experimentalChecks, "avoid-shadowing") {

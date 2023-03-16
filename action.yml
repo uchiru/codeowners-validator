@@ -50,6 +50,10 @@ inputs:
     description: "The comma-separated list of patterns that should be ignored by not-owned-checker. For example, you can specify * and as a result, the * pattern from the CODEOWNERS file will be ignored and files owned by this pattern will be reported as unowned unless a later specific pattern will match that path. It's useful because often we have default owners entry at the begging of the CODOEWNERS file, e.g. * @global-owner1 @global-owner2"
     required: false
 
+  not_owned_checker_skip_path_patterns:
+    description: "The comma-separated list of path patterns that should be ignored by not-owned-checker. For example `lib/tasks,db/migrations`"
+    required: false
+
   owner_checker_repository:
     description: "The owner and repository name. For example, gh-codeowners/codeowners-samples. Used to check if GitHub team is in the given organization and has permission to the given repository."
     required: false
@@ -73,6 +77,10 @@ inputs:
     description: "Only check listed subdirectories for CODEOWNERS ownership that don't have owners."
     required: false
 
+  not_owned_checker_git_diff_arguments:
+    description: "Add git diff arguments. Delimited by ,"
+    required: false
+
   not_owned_checker_trust_workspace:
     description: "Specifies whether the repository path should be marked as safe. See: https://github.com/actions/checkout/issues/766"
     required: false
@@ -80,7 +88,7 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'docker://ghcr.io/mszostok/codeowners-validator:v0.7.4'
+  image: 'docker://ghcr.io/uchiru/codeowners-validator:v0.8.8'
   env:
     ENVS_PREFIX: "INPUT"
 

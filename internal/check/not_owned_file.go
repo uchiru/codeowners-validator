@@ -19,27 +19,33 @@ type NotOwnedFileConfig struct {
 	// TrustWorkspace sets the global gif config
 	// to trust a given repository path
 	// see: https://github.com/actions/checkout/issues/766
-	TrustWorkspace bool     `envconfig:"default=false"`
-	SkipPatterns   []string `envconfig:"optional"`
-	Subdirectories []string `envconfig:"optional"`
+	TrustWorkspace   bool     `envconfig:"default=false"`
+	SkipPatterns     []string `envconfig:"optional"`
+	SkipPathPatterns []string `envconfig:"optional"`
+	Subdirectories   []string `envconfig:"optional"`
+	GitDiffArguments []string `envconfig:"optional"`
 }
 
 type NotOwnedFile struct {
-	skipPatterns   map[string]struct{}
-	subDirectories []string
-	trustWorkspace bool
+	skipPatterns     map[string]struct{}
+	skipPathPatterns []string
+	subDirectories   []string
+	gitDiffArguments []string
+	trustWorkspace   bool
 }
 
-func NewNotOwnedFile(cfg NotOwnedFileConfig) *NotOwnedFile {
+func NewNotOwnedFile(cfg *NotOwnedFileConfig) *NotOwnedFile {
 	skip := map[string]struct{}{}
 	for _, p := range cfg.SkipPatterns {
 		skip[p] = struct{}{}
 	}
 
 	return &NotOwnedFile{
-		skipPatterns:   skip,
-		subDirectories: cfg.Subdirectories,
-		trustWorkspace: cfg.TrustWorkspace,
+		skipPatterns:     skip,
+		skipPathPatterns: cfg.SkipPathPatterns,
+		subDirectories:   cfg.Subdirectories,
+		trustWorkspace:   cfg.TrustWorkspace,
+		gitDiffArguments: cfg.GitDiffArguments,
 	}
 }
 
@@ -88,7 +94,13 @@ func (c *NotOwnedFile) Check(ctx context.Context, in Input) (output Output, err 
 		return Output{}, err
 	}
 
-	out, err := c.GitListFiles(in.RepoDir)
+	out, err := func() (string, error) {
+		if len(c.gitDiffArguments) > 0 {
+			return c.GitDiffFiles(in.RepoDir)
+		}
+		return c.GitListFiles(in.RepoDir)
+	}()
+
 	if err != nil {
 		return Output{}, err
 	}
@@ -96,8 +108,12 @@ func (c *NotOwnedFile) Check(ctx context.Context, in Input) (output Output, err 
 	lsOut := strings.TrimSpace(out)
 	if lsOut != "" {
 		lines := strings.Split(lsOut, "\n")
-		msg := fmt.Sprintf("Found %d not owned files (skipped patterns: %q):\n%s", len(lines), c.skipPatternsList(), c.ListFormatFunc(lines))
-		bldr.ReportIssue(msg)
+		filteredOwnerLines := c.filterByOwners(patterns, lines)
+		filteredLines := c.filterByPaths(filteredOwnerLines)
+		if len(filteredLines) > 0 {
+			msg := fmt.Sprintf("Found %d not owned files (skipped patterns: %q, skipped paths: %q):\n%s", len(filteredLines), c.skipPatternsList(), c.skipPathPatterns, c.ListFormatFunc(filteredLines))
+			bldr.ReportIssue(msg)
+		}
 	}
 
 	return bldr.Output(), nil
@@ -197,6 +213,23 @@ func (c *NotOwnedFile) GitListFiles(repoDir string) (string, error) {
 	return string(stdout), nil
 }
 
+func (c *NotOwnedFile) GitDiffFiles(repoDir string) (string, error) {
+	args := []string{"diff"}
+	args = append(args, c.gitDiffArguments...)
+
+	gitdiff := pipe.Script(
+		pipe.ChDir(repoDir),
+		pipe.Exec("git", args...),
+	)
+
+	stdout, stderr, err := pipe.DividedOutput(gitdiff)
+	if err != nil {
+		return "", errors.Wrap(err, string(stderr))
+	}
+
+	return string(stdout), nil
+}
+
 func (c *NotOwnedFile) trustWorkspaceIfNeeded(repo string) error {
 	if !c.trustWorkspace {
 		return nil
@@ -217,6 +250,48 @@ func (c *NotOwnedFile) skipPatternsList() string {
 		list = append(list, k)
 	}
 	return strings.Join(list, ",")
+}
+
+func (c *NotOwnedFile) filterByOwners(patterns, files []string) []string {
+	f := func(search string, patterns []string) bool {
+		for _, pattern := range patterns {
+			if ownerFound := strings.HasPrefix(search, pattern); ownerFound {
+				return true
+			}
+		}
+		return false
+	}
+
+	var result []string
+	for _, file := range files {
+		if fileOwnerfound := f(file, patterns); fileOwnerfound {
+			continue
+		}
+		result = append(result, file)
+	}
+
+	return result
+}
+
+func (c *NotOwnedFile) filterByPaths(files []string) []string {
+	f := func(search string, patterns []string) bool {
+		for _, pattern := range patterns {
+			if pathFound := strings.HasPrefix(search, pattern); pathFound {
+				return true
+			}
+		}
+		return false
+	}
+
+	var result []string
+	for _, file := range files {
+		if filePathfound := f(file, c.skipPathPatterns); filePathfound {
+			continue
+		}
+		result = append(result, file)
+	}
+
+	return result
 }
 
 // ListFormatFunc is a basic formatter that outputs

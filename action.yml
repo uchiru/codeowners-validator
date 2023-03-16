@@ -54,6 +54,10 @@ inputs:
     description: "The comma-separated list of path patterns that should be ignored by not-owned-checker. For example `lib/tasks,db/migrations`"
     required: false
 
+  not_owned_checker_only_path_patterns:
+    description: "The comma-separated list of path patterns that should be checked by not-owned-checker. For example `app`"
+    required: false
+
   owner_checker_repository:
     description: "The owner and repository name. For example, gh-codeowners/codeowners-samples. Used to check if GitHub team is in the given organization and has permission to the given repository."
     required: false
@@ -88,7 +92,7 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'docker://ghcr.io/uchiru/codeowners-validator:v0.8.8'
+  image: 'docker://ghcr.io/uchiru/codeowners-validator:v0.8.9'
   env:
     ENVS_PREFIX: "INPUT"
 

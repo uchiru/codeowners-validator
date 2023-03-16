@@ -19,14 +19,16 @@ type NotOwnedFileConfig struct {
 	// TrustWorkspace sets the global gif config
 	// to trust a given repository path
 	// see: https://github.com/actions/checkout/issues/766
-	TrustWorkspace   bool     `envconfig:"default=false"`
-	SkipPatterns     []string `envconfig:"optional"`
-	Subdirectories   []string `envconfig:"optional"`
-	GitDiffArguments []string `envconfig:"optional"`
+	TrustWorkspace       bool     `envconfig:"default=false"`
+	SkipPatterns         []string `envconfig:"optional"`
+	SkipPathPatterns     []string `envconfig:"optional"`
+	Subdirectories       []string `envconfig:"optional"`
+	GitDiffArguments     []string `envconfig:"optional"`
 }
 
 type NotOwnedFile struct {
 	skipPatterns     map[string]struct{}
+	skipPathPatterns []string
 	subDirectories   []string
 	gitDiffArguments []string
 	trustWorkspace   bool
@@ -40,6 +42,7 @@ func NewNotOwnedFile(cfg *NotOwnedFileConfig) *NotOwnedFile {
 
 	return &NotOwnedFile{
 		skipPatterns:     skip,
+		skipPathPatterns: cfg.SkipPathPatterns,
 		subDirectories:   cfg.Subdirectories,
 		trustWorkspace:   cfg.TrustWorkspace,
 		gitDiffArguments: cfg.GitDiffArguments,
@@ -105,7 +108,8 @@ func (c *NotOwnedFile) Check(ctx context.Context, in Input) (output Output, err 
 	lsOut := strings.TrimSpace(out)
 	if lsOut != "" {
 		lines := strings.Split(lsOut, "\n")
-		filteredLines := c.filterByOwners(patterns, lines)
+		filteredOwnerLines := c.filterByOwners(patterns, lines)
+		filteredLines := c.filterByPaths(filteredOwnerLines)
 		if len(filteredLines) > 0 {
 			msg := fmt.Sprintf("Found %d not owned files (skipped patterns: %q):\n%s", len(filteredLines), c.skipPatternsList(), c.ListFormatFunc(filteredLines))
 			bldr.ReportIssue(msg)
@@ -261,6 +265,27 @@ func (c *NotOwnedFile) filterByOwners(patterns, files []string) []string {
 	var result []string
 	for _, file := range files {
 		if fileOwnerfound := f(file, patterns); fileOwnerfound {
+			continue
+		}
+		result = append(result, file)
+	}
+
+	return result
+}
+
+func (c *NotOwnedFile) filterByPaths(files []string) []string {
+	f := func(search string, patterns []string) bool {
+		for _, pattern := range patterns {
+			if pathFound := strings.HasPrefix(search, pattern); pathFound {
+				return true
+			}
+		}
+		return false
+	}
+
+	var result []string
+	for _, file := range files {
+		if filePathfound := f(file, c.skipPathPatterns); filePathfound {
 			continue
 		}
 		result = append(result, file)

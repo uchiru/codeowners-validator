@@ -317,7 +317,7 @@ func (c *NotOwnedFile) selectByPaths(files []string) []string {
 		if filePathfound := f(file, c.onlyPathPatterns); filePathfound {
 			result = append(result, file)
 		}
-		continue		
+		continue
 	}
 
 	return result

@@ -22,6 +22,7 @@ type NotOwnedFileConfig struct {
 	TrustWorkspace   bool     `envconfig:"default=false"`
 	SkipPatterns     []string `envconfig:"optional"`
 	SkipPathPatterns []string `envconfig:"optional"`
+	OnlyPathPatterns []string `envconfig:"optional"`
 	Subdirectories   []string `envconfig:"optional"`
 	GitDiffArguments []string `envconfig:"optional"`
 }
@@ -29,6 +30,7 @@ type NotOwnedFileConfig struct {
 type NotOwnedFile struct {
 	skipPatterns     map[string]struct{}
 	skipPathPatterns []string
+	onlyPathPatterns []string
 	subDirectories   []string
 	gitDiffArguments []string
 	trustWorkspace   bool
@@ -43,6 +45,7 @@ func NewNotOwnedFile(cfg *NotOwnedFileConfig) *NotOwnedFile {
 	return &NotOwnedFile{
 		skipPatterns:     skip,
 		skipPathPatterns: cfg.SkipPathPatterns,
+		onlyPathPatterns: cfg.OnlyPathPatterns,
 		subDirectories:   cfg.Subdirectories,
 		trustWorkspace:   cfg.TrustWorkspace,
 		gitDiffArguments: cfg.GitDiffArguments,
@@ -109,9 +112,10 @@ func (c *NotOwnedFile) Check(ctx context.Context, in Input) (output Output, err 
 	if lsOut != "" {
 		lines := strings.Split(lsOut, "\n")
 		filteredOwnerLines := c.filterByOwners(patterns, lines)
-		filteredLines := c.filterByPaths(filteredOwnerLines)
+		filteredPathLines := c.skipByPaths(filteredOwnerLines)
+		filteredLines := c.selectByPaths(filteredPathLines)
 		if len(filteredLines) > 0 {
-			msg := fmt.Sprintf("Found %d not owned files (skipped patterns: %q, skipped paths: %q):\n%s", len(filteredLines), c.skipPatternsList(), c.skipPathPatterns, c.ListFormatFunc(filteredLines))
+			msg := fmt.Sprintf("Found %d not owned files (skipped patterns: %q, skipped paths: %q, only paths: %q):\n%s", len(filteredLines), c.skipPatternsList(), c.skipPathPatterns, c.onlyPathPatterns, c.ListFormatFunc(filteredLines))
 			bldr.ReportIssue(msg)
 		}
 	}
@@ -273,7 +277,7 @@ func (c *NotOwnedFile) filterByOwners(patterns, files []string) []string {
 	return result
 }
 
-func (c *NotOwnedFile) filterByPaths(files []string) []string {
+func (c *NotOwnedFile) skipByPaths(files []string) []string {
 	f := func(search string, patterns []string) bool {
 		for _, pattern := range patterns {
 			if pathFound := strings.HasPrefix(search, pattern); pathFound {
@@ -289,6 +293,31 @@ func (c *NotOwnedFile) filterByPaths(files []string) []string {
 			continue
 		}
 		result = append(result, file)
+	}
+
+	return result
+}
+
+func (c *NotOwnedFile) selectByPaths(files []string) []string {
+	if (c.onlyPathPatterns == []) {
+		return files
+	}
+
+	f := func(search string, patterns []string) bool {
+		for _, pattern := range patterns {
+			if pathFound := strings.HasPrefix(search, pattern); pathFound {
+				return false
+			}
+		}
+		return true
+	}
+
+	var result []string
+	for _, file := range files {
+		if filePathfound := f(file, c.onlyPathPatterns); filePathfound {
+			result = append(result, file)
+		}
+		continue		
 	}
 
 	return result

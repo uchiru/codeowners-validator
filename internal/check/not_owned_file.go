@@ -299,7 +299,7 @@ func (c *NotOwnedFile) skipByPaths(files []string) []string {
 }
 
 func (c *NotOwnedFile) selectByPaths(files []string) []string {
-	if (c.onlyPathPatterns == []) {
+	if len(c.onlyPathPatterns) == 0 {
 		return files
 	}
 

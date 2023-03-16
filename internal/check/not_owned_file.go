@@ -19,11 +19,11 @@ type NotOwnedFileConfig struct {
 	// TrustWorkspace sets the global gif config
 	// to trust a given repository path
 	// see: https://github.com/actions/checkout/issues/766
-	TrustWorkspace       bool     `envconfig:"default=false"`
-	SkipPatterns         []string `envconfig:"optional"`
-	SkipPathPatterns     []string `envconfig:"optional"`
-	Subdirectories       []string `envconfig:"optional"`
-	GitDiffArguments     []string `envconfig:"optional"`
+	TrustWorkspace   bool     `envconfig:"default=false"`
+	SkipPatterns     []string `envconfig:"optional"`
+	SkipPathPatterns []string `envconfig:"optional"`
+	Subdirectories   []string `envconfig:"optional"`
+	GitDiffArguments []string `envconfig:"optional"`
 }
 
 type NotOwnedFile struct {
